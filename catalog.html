@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CityPulse — Full Catalog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body{font-family:Inter,system-ui,sans-serif}.glass{background:rgba(15,23,42,.75);backdrop-filter:blur(12px)}</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2 font-bold"><div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-sky-500 flex items-center justify-center text-sm">CP</div>City<span class="text-emerald-400">Pulse</span></a>
+      <div class="flex gap-4 text-sm"><a href="index.html" class="hover:text-emerald-400">Home</a><a href="catalog.html" class="text-emerald-400 font-medium">Catalog</a></div>
+    </div>
+  </nav>
+  <main class="pt-20 pb-16 max-w-7xl mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-2">Full Catalog</h1>
+    <p class="text-slate-400 text-sm mb-6 max-w-2xl">Notable small cities and towns worldwide. Search or filter by region. Open any entry in a new tab. This is a practical curated set — not the millions of named places that exist.</p>
+    <div class="flex flex-col sm:flex-row gap-3 mb-6">
+      <input id="search" type="text" placeholder="Search city or country…" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" oninput="filter()">
+      <select id="region" onchange="filter()" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm">
+        <option value="all">All regions</option>
+        <option value="Europe">Europe</option>
+        <option value="Asia">Asia</option>
+        <option value="Americas">Americas</option>
+        <option value="Africa">Africa</option>
+        <option value="Oceania">Oceania</option>
+      </select>
+    </div>
+    <div class="text-sm text-slate-500 mb-4"><span id="count">0</span> shown</div>
+    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+  </main>
+  <script>
+    const CATALOG = [
+      { slug: "hallstatt", name: "Hallstatt", country: "Austria", flag: "🇦🇹", region: "Europe", known: "Alpine lake" },
+      { slug: "chefchaouen", name: "Chefchaouen", country: "Morocco", flag: "🇲🇦", region: "Africa", known: "Blue medina" },
+      { slug: "giethoorn", name: "Giethoorn", country: "Netherlands", flag: "🇳🇱", region: "Europe", known: "Canal village" },
+      { slug: "shirakawa-go", name: "Shirakawa-go", country: "Japan", flag: "🇯🇵", region: "Asia", known: "Thatched houses" },
+      { slug: "bled", name: "Bled", country: "Slovenia", flag: "🇸🇮", region: "Europe", known: "Lake island" },
+      { slug: "reine", name: "Reine", country: "Norway", flag: "🇳🇴", region: "Europe", known: "Lofoten" },
+      { slug: "bibury", name: "Bibury", country: "United Kingdom", flag: "🇬🇧", region: "Europe", known: "Cotswolds" },
+      { slug: "oia", name: "Oia", country: "Greece", flag: "🇬🇷", region: "Europe", known: "Santorini" },
+      { slug: "rothenburg", name: "Rothenburg ob der Tauber", country: "Germany", flag: "🇩🇪", region: "Europe", known: "Medieval walls" },
+      { slug: "lauterbrunnen", name: "Lauterbrunnen", country: "Switzerland", flag: "🇨🇭", region: "Europe", known: "Waterfalls" },
+      { slug: "purmamarca", name: "Purmamarca", country: "Argentina", flag: "🇦🇷", region: "Americas", known: "Seven Colors" },
+      { slug: "izamal", name: "Izamal", country: "Mexico", flag: "🇲🇽", region: "Americas", known: "Yellow city" },
+      { slug: "ubud", name: "Ubud", country: "Indonesia", flag: "🇮🇩", region: "Asia", known: "Bali culture" },
+      { slug: "paraty", name: "Paraty", country: "Brazil", flag: "🇧🇷", region: "Americas", known: "Colonial port" },
+      { slug: "marsaxlokk", name: "Marsaxlokk", country: "Malta", flag: "🇲🇹", region: "Europe", known: "Fishing harbour" },
+      { slug: "manarola", name: "Manarola", country: "Italy", flag: "🇮🇹", region: "Europe", known: "Cinque Terre" },
+      { slug: "kotor", name: "Kotor", country: "Montenegro", flag: "🇲🇪", region: "Europe", known: "Bay fortress" },
+      { slug: "russell", name: "Russell", country: "New Zealand", flag: "🇳🇿", region: "Oceania", known: "Bay of Islands" },
+      { slug: "ogunquit", name: "Ogunquit", country: "USA", flag: "🇺🇸", region: "Americas", known: "Maine coast" },
+      { slug: "boquete", name: "Boquete", country: "Panama", flag: "🇵🇦", region: "Americas", known: "Highland town" },
+      { slug: "chamarel", name: "Chamarel", country: "Mauritius", flag: "🇲🇺", region: "Africa", known: "Coloured earth" },
+      { slug: "ollantaytambo", name: "Ollantaytambo", country: "Peru", flag: "🇵🇪", region: "Americas", known: "Inca town" },
+      { slug: "hahoe", name: "Hahoe Folk Village", country: "South Korea", flag: "🇰🇷", region: "Asia", known: "Traditional village" },
+      { slug: "tatev", name: "Tatev", country: "Armenia", flag: "🇦🇲", region: "Asia", known: "Monastery village" },
+      { slug: "zhouzhuang", name: "Zhouzhuang", country: "China", flag: "🇨🇳", region: "Asia", known: "Water town" }
+    ];
+    function filter(){
+      const q = document.getElementById('search').value.toLowerCase().trim();
+      const reg = document.getElementById('region').value;
+      let n = 0;
+      document.getElementById('grid').innerHTML = CATALOG.filter(c => {
+        const matchQ = !q || c.name.toLowerCase().includes(q) || c.country.toLowerCase().includes(q) || c.known.toLowerCase().includes(q);
+        const matchR = reg === 'all' || c.region === reg;
+        return matchQ && matchR;
+      }).map(c => {
+        n++;
+        return '<a href="track.html?city='+c.slug+'" target="_blank" class="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-emerald-500/50 transition flex items-start gap-3"><div class="text-2xl">'+c.flag+'</div><div><div class="font-semibold text-sm">'+c.name+'</div><div class="text-xs text-slate-500">'+c.country+' · '+c.region+'</div><div class="text-xs text-slate-400 mt-1">'+c.known+'</div></div></a>';
+      }).join('');
+      document.getElementById('count').textContent = n;
+    }
+    const params = new URLSearchParams(location.search);
+    const r = params.get('region');
+    if (r) {
+      const map = { europe: 'Europe', asia: 'Asia', americas: 'Americas', africa: 'Africa', oceania: 'Oceania' };
+      if (map[r]) document.getElementById('region').value = map[r];
+    }
+    filter();
+  </script>
+</body>
+</html>
