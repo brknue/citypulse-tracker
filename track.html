@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CityPulse — City Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body{font-family:Inter,system-ui,sans-serif}.glass{background:rgba(15,23,42,.75);backdrop-filter:blur(12px)}</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2 font-bold"><div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-sky-500 flex items-center justify-center text-sm">CP</div>City<span class="text-emerald-400">Pulse</span></a>
+      <div class="flex items-center gap-3 text-sm">
+        <a href="index.html" class="hover:text-emerald-400">Home</a>
+        <a href="catalog.html" class="hover:text-emerald-400">Catalog</a>
+        <button onclick="addToTracked()" id="trackBtn" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold">+ Track This</button>
+      </div>
+    </div>
+  </nav>
+  <main class="pt-20 pb-16 max-w-4xl mx-auto px-4">
+    <div id="loading" class="text-center py-20 text-slate-400">Loading city…</div>
+    <div id="content" class="hidden">
+      <div class="flex flex-col sm:flex-row gap-6 items-start mb-8">
+        <div id="flag" class="text-5xl"></div>
+        <div>
+          <h1 id="cityName" class="text-3xl font-bold mb-1"></h1>
+          <p id="country" class="text-slate-400 text-sm mb-2"></p>
+          <p id="blurb" class="text-slate-300 text-sm max-w-xl"></p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center"><div class="text-xs text-slate-500">Region</div><div id="region" class="font-semibold mt-1"></div></div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center"><div class="text-xs text-slate-500">Known for</div><div id="known" class="font-semibold mt-1 text-sm"></div></div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center"><div class="text-xs text-slate-500">Type</div><div id="type" class="font-semibold mt-1"></div></div>
+      </div>
+      <div class="mb-6"><h2 class="font-bold mb-3">Notes / Highlights</h2><div id="notes" class="space-y-2 text-sm text-slate-300"></div></div>
+      <div><h2 class="font-bold mb-3">Related towns</h2><div id="related" class="flex flex-wrap gap-2"></div></div>
+    </div>
+    <div id="notFound" class="hidden text-center py-20"><h1 class="text-2xl font-bold mb-2">City not found</h1><a href="catalog.html" class="text-emerald-400 hover:underline">Browse Catalog →</a></div>
+  </main>
+  <div id="trackedBar" class="fixed bottom-0 left-0 right-0 glass border-t border-slate-800 p-3 hidden">
+    <div class="max-w-7xl mx-auto flex items-center gap-3 overflow-x-auto">
+      <span class="text-xs text-slate-400 shrink-0">Tracked:</span>
+      <div id="trackedList" class="flex gap-2"></div>
+      <button onclick="clearTracked()" class="ml-auto text-xs text-slate-500 hover:text-rose-400">Clear</button>
+    </div>
+  </div>
+  <script>
+    const CITIES = {
+      "hallstatt": { name: "Hallstatt", country: "Austria", flag: "🇦🇹", region: "Europe", known: "Lake + salt history", type: "Alpine village", blurb: "UNESCO village on Hallstätter See, famous for mountain setting and salt mining history.", notes: ["Heavily photographed", "Tourism managed", "Heritage protected"], related: ["bled"] },
+      "chefchaouen": { name: "Chefchaouen", country: "Morocco", flag: "🇲🇦", region: "Africa", known: "Blue medina", type: "Mountain town", blurb: "The Blue Pearl of Morocco in the Rif Mountains.", notes: ["Slow tourism destination", "Craft culture"], related: [] },
+      "giethoorn": { name: "Giethoorn", country: "Netherlands", flag: "🇳🇱", region: "Europe", known: "Canal village", type: "Water town", blurb: "Car-free village of canals and thatched houses — Dutch Venice.", notes: ["No cars in core", "Popular day trips"], related: [] },
+      "shirakawa-go": { name: "Shirakawa-go", country: "Japan", flag: "🇯🇵", region: "Asia", known: "Gassho-zukuri houses", type: "Mountain village", blurb: "UNESCO site with steep thatched-roof farmhouses for heavy snow.", notes: ["Winter illuminations", "Remote setting"], related: [] },
+      "bled": { name: "Bled", country: "Slovenia", flag: "🇸🇮", region: "Europe", known: "Lake island + castle", type: "Alpine resort town", blurb: "Alpine lake with island church and cliff-top castle.", notes: ["Classic lake destination", "Cream cake is local icon"], related: ["hallstatt"] },
+      "reine": { name: "Reine", country: "Norway", flag: "🇳🇴", region: "Europe", known: "Lofoten scenery", type: "Fishing village", blurb: "Dramatic fishing village in the Lofoten Islands.", notes: ["Midnight sun / northern lights", "Fishing heritage"], related: [] },
+      "bibury": { name: "Bibury", country: "United Kingdom", flag: "🇬🇧", region: "Europe", known: "Cotswolds cottages", type: "English village", blurb: "Often called one of the prettiest villages in England.", notes: ["Arlington Row", "Day-visitor traffic"], related: [] },
+      "oia": { name: "Oia", country: "Greece", flag: "🇬🇷", region: "Europe", known: "Santorini sunsets", type: "Cliff village", blurb: "Whitewashed cliffside village known for caldera views and sunsets.", notes: ["Very popular in summer"], related: [] },
+      "rothenburg": { name: "Rothenburg ob der Tauber", country: "Germany", flag: "🇩🇪", region: "Europe", known: "Medieval walls", type: "Walled town", blurb: "Well-preserved medieval town on the Romantic Road.", notes: ["Christmas market", "Walkable old town"], related: [] },
+      "lauterbrunnen": { name: "Lauterbrunnen", country: "Switzerland", flag: "🇨🇭", region: "Europe", known: "Waterfalls valley", type: "Alpine village", blurb: "Valley under cliffs and waterfalls, gateway to Jungfrau region.", notes: ["Hiking base"], related: ["hallstatt"] },
+      "purmamarca": { name: "Purmamarca", country: "Argentina", flag: "🇦🇷", region: "Americas", known: "Seven Colors Hill", type: "Andean village", blurb: "Town at the foot of Cerro de los Siete Colores.", notes: ["Indigenous culture", "UNESCO landscape"], related: [] },
+      "izamal": { name: "Izamal", country: "Mexico", flag: "🇲🇽", region: "Americas", known: "Yellow city", type: "Colonial town", blurb: "Colonial town painted in yellow with a large convent.", notes: ["Quiet Yucatán alternative"], related: [] },
+      "ubud": { name: "Ubud", country: "Indonesia", flag: "🇮🇩", region: "Asia", known: "Culture + rice terraces", type: "Cultural town", blurb: "Cultural heart of Bali.", notes: ["Busier than classic small town"], related: [] },
+      "paraty": { name: "Paraty", country: "Brazil", flag: "🇧🇷", region: "Americas", known: "Colonial port", type: "Coastal town", blurb: "Portuguese colonial town between Rio and São Paulo.", notes: ["Cobblestones flood with tide"], related: [] },
+      "marsaxlokk": { name: "Marsaxlokk", country: "Malta", flag: "🇲🇹", region: "Europe", known: "Colourful boats", type: "Fishing village", blurb: "Traditional fishing village with colourful luzzu boats.", notes: ["Sunday market"], related: [] }
+    };
+    function getSlug(){ return new URLSearchParams(location.search).get('city')||''; }
+    function render(slug){
+      const c = CITIES[slug];
+      if(!c){ document.getElementById('loading').classList.add('hidden'); document.getElementById('notFound').classList.remove('hidden'); return; }
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+      document.title = c.name + ' — CityPulse';
+      document.getElementById('flag').textContent = c.flag;
+      document.getElementById('cityName').textContent = c.name;
+      document.getElementById('country').textContent = c.country + ' · ' + c.region;
+      document.getElementById('blurb').textContent = c.blurb;
+      document.getElementById('region').textContent = c.region;
+      document.getElementById('known').textContent = c.known;
+      document.getElementById('type').textContent = c.type;
+      document.getElementById('notes').innerHTML = (c.notes||[]).map(n=>'<div class="bg-slate-900 border border-slate-800 rounded-lg p-3">'+n+'</div>').join('')||'<p class="text-slate-500">No notes</p>';
+      document.getElementById('related').innerHTML = (c.related||[]).map(r=>{const x=CITIES[r];return x?'<a href="track.html?city='+r+'" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-800 text-sm">'+x.flag+' '+x.name+'</a>':''}).join('')||'<span class="text-slate-500 text-sm">None</span>';
+    }
+    function getTracked(){try{return JSON.parse(localStorage.getItem('cp_tracked')||'[]')}catch{return[]}}
+    function saveTracked(l){localStorage.setItem('cp_tracked',JSON.stringify(l));renderBar()}
+    function addToTracked(){const s=getSlug();if(!s||!CITIES[s])return;let l=getTracked();if(!l.includes(s)){l.push(s);saveTracked(l)}document.getElementById('trackBtn').textContent='✓ Tracked'}
+    function clearTracked(){saveTracked([])}
+    function renderBar(){const l=getTracked();const bar=document.getElementById('trackedBar');if(!l.length){bar.classList.add('hidden');return}bar.classList.remove('hidden');document.getElementById('trackedList').innerHTML=l.map(s=>{const c=CITIES[s];return c?'<a href="track.html?city='+s+'" target="_blank" class="px-2.5 py-1 rounded-lg bg-slate-800 text-xs">'+c.flag+' '+c.name+'</a>':''}).join('')}
+    render(getSlug());renderBar();
+    if(getTracked().includes(getSlug())) document.getElementById('trackBtn').textContent='✓ Tracked';
+  </script>
+</body>
+</html>
